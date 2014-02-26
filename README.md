@@ -1,0 +1,4 @@
+index-everything
+================
+
+Everything Elasticsearch

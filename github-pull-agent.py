@@ -14,7 +14,6 @@ import json
 import requests
 
 DEFAULT_BASE_URL = "https://api.github.com"
-OAUTH_SUFFIX = "?access_token=%s"
 
 class VanillaGithub(object):
     """
@@ -33,19 +32,22 @@ class VanillaGithub(object):
         return self.get_repos_from_url('/'.join([DEFAULT_BASE_URL, 'repositories']))
 
     def get_repos_from_url(self, url):
-        r = requests.get(url, auth=('f8df3fbbf54e60d92ff55cc61ee4ebf0df91c68d','x-oauth-basic'))
-        if (r.ok):
-            self.__rate_limit = r.headers['X-RateLimit-Remaining']
-            next_url = self.parse_link(r.headers['Link'])
-            repoItems = r.json()
-            print("{} repos, {} calls left".format(len(repoItems), self.get_rate_limit()))
-            yield repoItems
-            print(next_url)
-            if len(repoItems) > 0:
-                import pdb; pdb.set_trace()
-                self.get_repos_from_url(next_url)
-        else:
-            print(r)
+        number_of_repos = 0
+        while True:
+            r = requests.get(url, auth=('f8df3fbbf54e60d92ff55cc61ee4ebf0df91c68d','x-oauth-basic'))
+            if (r.ok):
+                repoItems = r.json()
+                if len(repoItems) == 0:
+                    assert '{' in url
+                    return
+                self.__rate_limit = r.headers['X-RateLimit-Remaining']
+                url = self.parse_link(r.headers['Link'])
+                number_of_repos += len(repoItems)
+                print("{} repos, {} calls left".format(len(repoItems), self.get_rate_limit()))
+                yield repoItems
+                print(url)
+            else:
+                print(r)
 
     def parse_link(self, link_header):
         url = link_header.split(',')[0].split(';')[0][1:-1]

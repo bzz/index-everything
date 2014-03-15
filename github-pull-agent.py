@@ -12,6 +12,8 @@ import sys
 import time
 import json
 import requests
+import collections
+from random import random
 
 DEFAULT_BASE_URL = "https://api.github.com"
 
@@ -73,13 +75,34 @@ class VanillaGithub(object):
         return url
         
 
-def main():
-    g = VanillaGithub("f8df3fbbf54e60d92ff55cc61ee4ebf0df91c68d")
+def parse(argv, arg_names):
+    """CLI args parsing with defaults.
     
-    with open('raw-github-repos.txt', 'wb+') as f: 
-        for repo in g.get_repos():
+       Args:
+          argv: list sys.argv
+          arg_names: fict with arg_names as key and defulat value
+    """
+    args = dict(zip(arg_names, argv))
+    arg_list = collections.namedtuple('arg_list', arg_names.keys())
+    args = arg_list(*(args.get(arg, arg_names[arg]) for arg in arg_names.keys()))
+    return args
+
+
+
+def main():
+    #parsing args to namedtuples() with default values
+    arg_names = {'access_token':'f8df3fbbf54e60d92ff55cc61ee4ebf0df91c68d',
+                 'output_file':'raw-github-repos.txt',
+                 'start':0,
+                 'end':None}
+    args = parse(sys.argv[1:0], arg_names)
+
+    g = VanillaGithub(args.access_token)
+
+    with open(args.output_file, 'wb+') as f:
+        for repo in g.get_repos(args.start, args.end):
             print(json.dumps(repo), file=f)
-            time.sleep(1)
+            time.sleep(random()*2)
 
 if __name__ == "__main__":
     main()

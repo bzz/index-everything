@@ -67,7 +67,10 @@ class VanillaGithub(object):
                 url = self.parse_link(r.headers['Link'])
                 number_of_repos += len(repoItems)
                 print("{} repos, {} calls left".format(len(repoItems), self.get_rate_limit()))
-                yield repoItems
+                if not last or last and repoItems[0]['id'] < last:
+                    yield repoItems
+                else:
+                    return
                 print(url)
             else:
                 print(r.json())
@@ -117,7 +120,7 @@ def main():
     start = args.start if args.start > start else start 
 
     with open(args.output_file, 'a') as f:
-        for repos in g.get_repos(start, args.end):
+        for repos in g.get_repos(int(start), int(args.end)):
             #for repo in repos:
             print(json.dumps(repos), file=f)
             time.sleep(random()*2)

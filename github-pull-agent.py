@@ -8,18 +8,22 @@ __copyright__  = 'Copyright 2014'
 """Python agent to pull list of repositories using plain Github3 API
 """
 
-import sys
+import sys, os
 import time
 import json
 import requests
 import collections
 from random import random
+from collections import OrderedDict
 
 DEFAULT_BASE_URL = "https://api.github.com"
 
 class VanillaGithub(object):
-    """
-    Very simple wrapper aroung GithubAPI3, supports only token auth method
+    """Very simple wrapper aroung GithubAPI3.
+
+    Supports only token auth method.
+    Persists results to output file,  each line is a JSON araray of 100 repos 
+    (so file itself is not a valid JSON)
     """
 
     def __init__(self, token=None):
@@ -31,9 +35,9 @@ class VanillaGithub(object):
         return self.__rate_limit
 
     def get_repos(self, first=0 , last=None):
-        """Iterates over public repositorise in (first, last] range.
+        """Iterates over public repositorise in [first, last) range.
 
-        Actual repo list is a superset of the given range i.e (firest, last, ....] 
+        Actual repo list is a superset of the given range i.e [first, last, ....)
         Args:
             fist_repo: id of repository to start interation from
             last_repo: id of repository to end interation from
@@ -87,21 +91,35 @@ def parse(argv, arg_names):
     args = arg_list(*(args.get(arg, arg_names[arg]) for arg in arg_names.keys()))
     return args
 
-
+def deduce_start_to_resume_from(filename):
+    """Reads last line, gets .id from it
+    """
+    last_line_of_hundred = os.popen("tail -n 1 %s" % filename).read()
+    if not last_line_of_hundred.strip():
+        last_id = 0
+    else:
+        last = json.loads(last_line_of_hundred)[-1]
+        last_id = last['id'] if last and 'id' in last else 0
+    print("Starting from {}".format(last_id))
+    return last_id
 
 def main():
     #parsing args to namedtuples() with default values
-    arg_names = {'access_token':'f8df3fbbf54e60d92ff55cc61ee4ebf0df91c68d',
-                 'output_file':'raw-github-repos.txt',
-                 'start':0,
-                 'end':None}
-    args = parse(sys.argv[1:0], arg_names)
+    arg_names = OrderedDict([('access_token','f8df3fbbf54e60d92ff55cc61ee4ebf0df91c68d'),
+                 ('output_file', 'raw-github-repos.txt'),
+                 ('start', 0),
+                 ('end', None)])
+    args = parse(sys.argv[1:], arg_names)
 
     g = VanillaGithub(args.access_token)
 
-    with open(args.output_file, 'wb+') as f:
-        for repo in g.get_repos(args.start, args.end):
-            print(json.dumps(repo), file=f)
+    start = deduce_start_to_resume_from(args.output_file)
+    start = args.start if args.start > start else start 
+
+    with open(args.output_file, 'a') as f:
+        for repos in g.get_repos(start, args.end):
+            #for repo in repos:
+            print(json.dumps(repos), file=f)
             time.sleep(random()*2)
 
 if __name__ == "__main__":

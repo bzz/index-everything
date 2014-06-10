@@ -2,10 +2,14 @@
 
 from __future__ import print_function
 
-__author__ = 'abezzubov@nflabs.com (Alex Bzz)'
+__author__     = 'abezzubov@nflabs.com (Alex Bzz)'
 __copyright__  = 'Copyright 2014'
 
-"""Python agent to pull list of repositories using plain Github3 API
+"""Python agent to pull list of repositories using plain HTTP though Github3 API.
+
+   It is designed with scale considerations:
+     - run on multiple machines using GNU Parallel
+     - if stopped, will restart from the last fetched repo
 """
 
 import sys, os

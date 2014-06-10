@@ -36,12 +36,12 @@ cat segments.txt | \
 Segmants.txt
 -------------------
 # of lines = # parallel jobs
-token | [start | end)
-  --- |   ---  | ---
-personal-access-token1 0 4500000
-personal-access-token2 4500000 9000000
-personal-access-token3 9000000 13500000
-personal-access-token4 13500000 18000000
+oauth token | ourput file | [start | end)
+  --- | --- |  -------    | ---
+personal-access-token1| out1 | 0| 4500000
+personal-access-token2| out2 | 4500000| 9000000
+personal-access-token3| out3 | 9000000| 13500000
+personal-access-token4| out4 | 13500000| 18000000
 
 
 
